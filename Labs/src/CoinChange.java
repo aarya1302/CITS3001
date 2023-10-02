@@ -51,10 +51,87 @@ public class CoinChange{
         return change;
 
     }
+    public static boolean loopInvariant(int value, Map<Integer, Integer> change, int amount) {
+        if(value < 0) return false; // value should be non-negative
 
+        int totalInMap = 0;
+        for(int key: change.keySet()) {
+            if(change.get(key) < 0) return false; // counts should be non-negative
+            totalInMap += key * change.get(key); // Calculate the total amount in change map
+        }
+
+        return totalInMap + value == amount; // The total amount in the map plus the remaining value should be equal to the original amount
+    }
+
+    /**
+     * Apply the exact algorithm to calculate coin change.
+     * @param amount a non-negative integer which is required to be made up.
+     * @param denominations the available coin types (unique positive integers)
+     * @return a map of each denomination to the number of times it is used in the solution.
+     * **/
+
+    /**
+     * For this part of the question I used dynamic programming to populate at
+     */
+    public static Map<Integer,Integer> exactChange(int amount, int[] denominations){
+        //fill in code here
+        Map<Integer, Integer> change  = new HashMap<>();
+        denominations = insertSort(denominations);
+
+        // loop to fill up the Map
+        for(int i = 0; i < denominations.length; i++){
+            change.put(denominations[i], 0);
+        }
+        // dp array to store lengths of change
+        int[][] lenChange = new int[denominations.length+1][amount+1];
+
+        // loop to fill up dynamic programming array
+
+        for(int d = 0; d < lenChange.length; d++){
+            for(int v =0; v <= amount; v++){
+
+                if(d>0){
+                    if(v >= denominations[d-1] && v>0){
+                        int len_incl = lenChange[d][v-denominations[d -1]] + 1;
+
+                        int len_excl = lenChange[d-1][v];
+
+                        if(len_incl > len_excl && len_excl>0){
+                            lenChange[d][v] = len_excl;
+                        }else{
+                            lenChange[d][v] = len_incl;
+                        }
+
+                    }else if (v < denominations[d -1 ] && v > 0){
+                        lenChange[d][v] = lenChange[d-1][v];
+                    }
+                }
+
+
+
+            }
+        }
+
+        int d = lenChange.length -1;
+        int v = amount;
+        while(d > 0){
+            if(lenChange[d][v] != lenChange[d -1][v]){
+                change.put(denominations[d -1], change.get(denominations[d -1]) +1);
+                v = v - denominations[d-1];
+            }else{
+                d = d -1;
+            }
+
+        }
+
+
+
+        return change;
+
+    }
     public static void main(String[] args){
-        int[] denominations = {12,15,17,231,421,527,1};
-        Map<Integer,Integer> change = greedyChange(2134, denominations);
+        int[] denominations = {1,2,3};
+        Map<Integer,Integer> change = exactChange(5, denominations);
         Integer[] keys = change.keySet().toArray(new Integer[0]);
         Arrays.sort(keys);
         for(Integer i: keys)
